@@ -1,4 +1,4 @@
 .DS_Store
-.tif
-.tiff
-.dbf
+*.tif
+*.tiff
+*.dbf
