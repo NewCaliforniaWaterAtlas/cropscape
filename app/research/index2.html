@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src='http://api.tiles.mapbox.com/mapbox.js/v0.6.5/mapbox.js'></script>
+  <script src='sphericalmercator.js'></script>
+  <link href='http://api.tiles.mapbox.com/mapbox.js/v0.6.5/mapbox.css' rel='stylesheet' />
+  <style>
+    body { margin:0; padding:0; }
+    #map { position:absolute; top:0; bottom:0; width:100%; }
+  </style>
+</head>
+<body>
+<div id='map'></div>
+<script>
+    mapbox._wms_provider = function(template, map) {
+        var sph = new SphericalMercator();
+        var getTileUrl = function(coordinate) {
+            var coord = this.sourceCoordinate(coordinate);
+            var nwPoint = coord,
+                sePoint = coord.down().right(),
+                nwLoc = map.coordinateLocation(nwPoint),
+                seLoc = map.coordinateLocation(sePoint);
+                console.log(nwLoc);
+            var mnwLoc = sph.forward([
+                nwLoc.lon,
+                nwLoc.lat
+            ]);
+            var mseLoc = sph.forward([
+                seLoc.lon,
+                seLoc.lat
+            ]);
+            console.log(mnwLoc);
+                bbox = [mnwLoc[0], mseLoc[1], mseLoc[0], mnwLoc[1]].join(',');
+            return template
+                .replace('{BBOX}', bbox)
+        };
+ 
+        MM.MapProvider.call(this, getTileUrl);
+    };
+ 
+    mapbox._wms_provider.prototype = {
+        // quadKey generator
+        getTile: function(coord) {
+          return this.getTileUrl(coord);
+        }
+    };
+ 
+    MM.extend(mapbox._wms_provider, MM.MapProvider);
+ 
+ 
+    mapbox.wms = function(template, map, name) {
+      return new MM.Layer(new mapbox._wms_provider(template, map), null, name);
+    };
+ 
+    mapbox.auto('map', 'examples.map-zr0njcqy', function(map) {
+        map.addLayer(mapbox.wms('http://gis.csiss.gmu.edu/cgi-bin/wms_cdlall?SRS=EPSG%3A102004&LAYERS=cdl_2012&FORMAT=image%2Fpng&TRANSPARENT=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&BBOX={BBOX}&WIDTH=256&HEIGHT=256', map));
+        map.zoom(5).center({ lat: 37, lon: -79 });
+ 
+    });
+</script>
+</body>
+</html>
